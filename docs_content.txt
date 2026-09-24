@@ -1,0 +1,809 @@
+========== OnionGrade_AI_PRD (1).docx ==========
+PRODUCT REQUIREMENTS
+OnionGrade AI — Product Requirements Document
+MVP / Hackathon PRD for SIH26031: AI-based onion quality assessment
+SIH 2026 • Problem Statement SIH26031 • Medium
+Product statement
+OnionGrade AI is an AI-assisted digital onion assaying application that standardizes visible external quality assessment, converts computer-vision measurements into rule-based Grade A/URS outcomes, and produces an auditable digital quality report.
+1. Problem Statement
+SIH26031 identifies subjective and inconsistent onion quality assessment across procurement centres. The supplied research explains that the underlying process is multidimensional: size, shape/uniformity, skin condition, cracks/cuts, rooting, discoloration, neck condition, sun damage, sprouting, mechanical injury, smut, soft rot, bacterial/neck rot, fungal infection and moisture/dryness are relevant quality considerations.
+The practical product problem is: large volume + multiple quality parameters + time pressure + human judgement can create inconsistent assessment risk. The solution should digitize the assessment layer while keeping the inspector in the decision loop.
+2. Goals
+Standardize image capture and visible external-quality assessment.
+Detect onions and relevant visible defects from representative samples.
+Estimate size/diameter and identify undersized bulbs.
+Calculate lot-level Grade A, URS and Other/Rejected proportions using an explicit rules engine.
+Explain every result with evidence, measurements, triggered rules and AI confidence.
+Generate a digital quality assessment report instantly.
+Support offline-first capture and later synchronization.
+Reduce subjective variation without claiming to eliminate human bias or disputes.
+3. Non-Goals / Explicit Limits
+No claim of 100% AI accuracy.
+No claim that smartphone images can reliably detect hidden internal rot, density, internal fungal infection or all moisture properties.
+No fully autonomous final grading when the case is ambiguous.
+No direct government-system integration in the MVP unless APIs/approval are actually available.
+No custom foundation model training for the hackathon.
+No farmer-facing account required for the MVP; the primary operator is the procurement inspector.
+4. Target Users
+User
+Need
+Primary actions
+Procurement Inspector / Operator
+Fast, consistent and explainable lot assessment
+Create lot, capture sample, review AI, confirm result, generate report
+Procurement Centre Supervisor
+Monitor work and review disputed/low-confidence assessments
+Search lots, inspect evidence, review reports
+Procurement Agency / Government Analyst
+Aggregate quality intelligence
+View centre-level trends and exports in optional dashboard
+Farmer / Supplier
+Understand how a lot was assessed
+Receive/view report or evidence summary; no direct app operation required in MVP
+5. Core Workflow
+  Create Lot  
+→
+  Standardized Capture  
+→
+  Image QA  
+→
+  CV Analysis  
+→
+  Rules Engine  
+→
+  Human Review  
+→
+  Digital Report  
+→
+  Sync  
+6. Functional Requirements
+ID
+Requirement
+Description
+Acceptance
+FR-01
+Lot creation
+Operator can create a lot with procurement centre, farmer/supplier, Lot ID, quantity, date/time and operator ID.
+Lot cannot proceed without required fields.
+FR-02
+Standardized capture
+App guides fixed distance, reference surface/scale, adequate lighting, multiple views and representative sampling.
+Poor-quality input is flagged before analysis.
+FR-03
+Image quality check
+System checks basic image quality such as blur/lighting/occlusion where supported.
+Operator receives actionable recapture guidance.
+FR-04
+Onion detection
+CV model identifies individual onions in the sample.
+Detected onions are countable and viewable.
+FR-05
+Defect detection
+System detects visible rot indicators, cracks/cuts, sprouting, discoloration, mechanical damage, skin loss and abnormal shape where the trained model supports them.
+Each supported defect is attached to evidence.
+FR-06
+Size estimation
+System estimates diameter/size and undersized proportion using a reference/scale.
+Measurements are stored with the assessment.
+FR-07
+Rules engine
+Measured characteristics are evaluated against configured procurement rules.
+Final grade is produced by deterministic rules, not an LLM opinion.
+FR-08
+Lot-level grading
+System calculates Grade A %, URS %, Other/Rejected % and defect statistics.
+Totals are internally consistent.
+FR-09
+Confidence & review
+System records model confidence and sends low-confidence/ambiguous cases to Manual Review.
+No silent forced verdict.
+FR-10
+Evidence trail
+System stores original sample images, annotations, measurements, rule triggers, timestamps and operator ID.
+Inspector can reconstruct why a result occurred.
+FR-11
+Digital report
+Generate a report containing Lot ID, farmer/agency, date/time, centre, sample size, grade percentages, defects, images, AI confidence, operator ID, final decision and report ID.
+Report is viewable/exportable.
+FR-12
+Offline-first
+Capture and locally store assessments without network; sync when connectivity returns.
+Local data is not lost during offline operation.
+FR-13
+History
+Operator can search and reopen previous lots.
+Assessment and sync state remain visible.
+FR-14
+Audit log
+System records assessment lifecycle events.
+Audit history is immutable to normal users.
+7. Rule / Grading Model
+The architecture must separate computer vision from grading logic:
+  Computer Vision  
+→
+  Measured Characteristics  
+→
+  Official/Configured Rules  
+→
+  Grade  
+Example: AI detects sprouting = YES → applicable rule marks the relevant Grade A criterion as not satisfied.
+The rule engine should store which rule version was applied to each lot.
+The UI must explain the triggered rule in plain language.
+Rules should be configurable so a future specification revision does not require retraining the CV model.
+The supplied research references a 3.5–7 cm procurement diameter range and different tolerances for Grade A and Grade-URS; exact production rules should be encoded only from the approved specification used by the team.
+8. Evidence Model
+Evidence object
+Required fields
+Sample Image
+image ID, lot ID, capture time, view number, quality status
+Detected Onion
+object ID, bounding box/mask, estimated diameter, confidence
+Defect
+defect type, object ID, confidence, image region
+Rule Evaluation
+rule ID/version, input measurement, condition, outcome
+Assessment
+lot ID, grade proportions, statistics, model version, rule version
+Report
+report ID, assessment ID, generated time, operator ID, report status
+9. AI Requirements
+Use computer vision for onion/object and visible-defect analysis.
+Use a deterministic rules engine for final grading.
+Use an image-quality gate before CV inference.
+Store model version and inference metadata with every assessment.
+When confidence is below a configured threshold, route to Manual Review.
+Do not represent AI confidence as probability of correctness unless the model has actually been calibrated for that interpretation.
+10. Offline-First Requirements
+Lot creation and image capture must work without network.
+Assessment records should have a local state: DRAFT → CAPTURED → ANALYZED → REVIEWED → REPORT_READY → SYNC_PENDING → SYNCED.
+Sync should be idempotent using stable local IDs.
+Uploads should resume/retry without duplicating lots.
+The UI must clearly distinguish local saved data from server-synced data.
+11. Security & Privacy
+Role-based access for operator/supervisor/admin functions.
+Private storage for assessment images and reports.
+Never expose backend secrets or model keys in the mobile client.
+Validate image type and size; generate safe storage filenames.
+Use encrypted transport for server communication.
+Maintain an audit trail for creation, analysis, manual review, report generation and sync.
+Apply least-privilege access to any future government or external integration.
+12. Non-Functional Requirements
+Area
+Requirement
+Performance
+Camera/capture screens should remain responsive; processing states must communicate progress without freezing the UI.
+Reliability
+Offline capture must preserve data across app restarts.
+Explainability
+Every grade must have visible evidence + rule rationale.
+Scalability
+Backend APIs and database schema should support multiple centres without centre-specific hardcoding.
+Maintainability
+CV model, rules engine and report generator should be separable modules.
+Usability
+A trained inspector should complete a standard lot workflow with minimal typing.
+Observability
+Store model/rule versions, timestamps, errors and sync states for debugging.
+13. MVP Demo Scenario
+Operator logs in and creates Lot #MH-NAS-02651 for a sample quantity.
+App guides the operator through representative sample arrangement and controlled capture.
+AI detects onions, estimates size and identifies supported visible defects.
+The rules engine evaluates the measurements and produces Grade A / URS / Other proportions.
+The result screen shows why the grade was reached, including defect percentages and triggered rules.
+Operator opens evidence, reviews any low-confidence items and confirms the assessment.
+App generates a digital quality report with report ID, evidence and timestamp.
+If offline, the report is stored locally and marked Sync Pending; when connectivity returns it syncs.
+14. Success Metrics for Prototype
+Metric
+Prototype measurement
+Workflow completion
+Percentage of seeded/demo lots that can complete Create → Capture → Result → Report without error.
+Explainability coverage
+100% of demo results show evidence and rule rationale.
+Offline reliability
+A demo lot remains intact after network loss and later sync.
+Rule consistency
+Same measurements produce the same grade every time.
+Model evaluation
+Report measured precision/recall or classification results on the team's labeled validation set; do not invent accuracy.
+15. Risks & Mitigations
+Risk
+Impact
+Mitigation
+Lighting variation
+Model errors
+Controlled capture guidance + image quality check
+Occlusion
+Hidden defects
+Sample arrangement + multiple views
+Dataset bias
+Poor generalization
+Collect varieties/regions/seasons/lighting and label Grade A/URS/rejected defects
+AI uncertainty
+Wrong automatic result
+Confidence threshold + Manual Review
+Internal defects
+Overclaiming capability
+MVP explicitly limited to visible external characteristics
+Connectivity
+Broken workflow at centres
+Offline-first local queue + sync
+Rules change
+Incorrect grading
+Versioned configurable rules engine
+Government integration
+Adoption delay
+Keep MVP API-independent and exportable
+16. Product Language — What We Claim
+Use
+“AI-assisted standardized assessment”, “reduces subjective variation”, “evidence-backed quality report”, “human-in-the-loop”, “offline-first”.
+Do not use
+“100% accurate”, “eliminates human bias”, “eliminates disputes”, “detects internal rot with a phone camera”, “government will definitely adopt this”.
+17. Antigravity Delivery Plan
+Phase 1 — App shell, design system, authentication and local lot model.
+Phase 2 — Create Lot + standardized camera/capture flow + image-quality states.
+Phase 3 — CV service integration with demo fixture fallback.
+Phase 4 — Rules engine + result/evidence screens.
+Phase 5 — Digital report generation + local storage + sync queue.
+Phase 6 — Backend API, database, authentication and audit logs.
+Phase 7 — Optional procurement analytics dashboard.
+Phase 8 — Testing, security checks and demo-mode hardening.
+
+========== OnionGrade_AI_Tech_Stack (1).docx ==========
+TECHNICAL STACK
+OnionGrade AI — Technical Architecture & Stack
+Zero-cost / hackathon implementation plan for Gemini Antigravity
+SIH 2026 • Problem Statement SIH26031 • Medium
+Cost target
+Target total cash spend for the online prototype: ₹0. Use open-source software and free service tiers. Keep local fallbacks so the demo remains runnable if a free-tier quota or network connection fails.
+1. Architecture Overview
+  React Native / Expo  
+→
+  FastAPI  
+→
+  CV Service  
+→
+  Rules Engine  
+→
+  PostgreSQL / SQLite  
+→
+  Report Generator  
+The supplied research recommends a prototype architecture of Flutter/React Native → Python/FastAPI → YOLO-based CV model → rules engine → SQLite/PostgreSQL → PDF report. For Antigravity, this document standardizes the implementation around React Native + Expo + TypeScript for the mobile client and FastAPI for the backend, while keeping the CV and rules layers modular.
+2. Recommended Stack
+Layer
+Technology
+Purpose
+Cost
+Mobile
+React Native + Expo + TypeScript
+Inspector app, camera workflow, offline UI
+Free / OSS
+Navigation
+Expo Router
+Screen navigation and deep links
+Free / OSS
+Styling
+NativeWind / StyleSheet
+Premium dark design system
+Free / OSS
+Icons
+Lucide React Native
+Consistent iconography
+Free / OSS
+Camera
+Expo Camera
+Capture guided sample images
+Free / OSS
+Local data
+SQLite / Expo SQLite
+Offline lots, evidence metadata and sync queue
+Free / OSS
+Backend
+Python + FastAPI + Uvicorn
+REST API and orchestration
+Free / OSS
+Validation
+Pydantic
+Strict API schemas and AI output validation
+Free / OSS
+ORM
+SQLAlchemy
+Portable database access
+Free / OSS
+Database
+Supabase PostgreSQL Free / local SQLite
+Relational data and audit records
+Free tier / OSS
+Storage
+Supabase Storage / local filesystem
+Private images and reports
+Free tier / local
+CV
+YOLO-family model via Ultralytics or equivalent OSS model
+Onion detection + visible defect detection
+OSS; verify license/model choice
+Image processing
+OpenCV + Pillow
+Resize, normalize, quality checks, annotation
+Free / OSS
+OCR (optional)
+Tesseract
+Extract text from uploaded supporting documents if later required
+Free / OSS
+Rules
+Python deterministic rules module
+Grade A/URS/Other calculations
+Free / OSS
+Reports
+ReportLab
+PDF quality assessment report
+Free / OSS
+Auth
+JWT + secure password hashing
+Operator authentication
+Free / OSS
+Testing
+pytest + Playwright + React Native Testing Library
+Automated testing
+Free / OSS
+CI
+GitHub Actions
+Lint/test/build pipeline
+Free for eligible usage
+Deployment
+Vercel/Render + Supabase Free
+Optional online demo deployment
+Free tiers
+3. Mobile App Modules
+Module
+Responsibilities
+auth
+Login/session, role and token lifecycle
+home
+Today’s lots, sync state and quick actions
+lots
+Create/search/open lots
+capture
+Camera permissions, capture guidance, sample views
+image-quality
+Blur/lighting/occlusion checks and recapture guidance
+analysis
+Submit images, show inference progress and results
+evidence
+Annotated image viewer, measurements and defect details
+grading
+Render rule-based Grade A/URS/Other outcome
+reports
+Preview, save/share and report status
+offline-sync
+Local queue, retry, conflict/idempotency handling
+settings
+Operator/centre configuration and app diagnostics
+4. Backend Modules
+Service/module
+Responsibilities
+auth
+Authentication, refresh/session, role authorization
+lots
+Lot CRUD and lifecycle state
+capture
+Upload/session metadata and image references
+cv
+Preprocess images and call CV inference
+quality
+Image quality gate
+defects
+Normalize model detections into domain objects
+rules
+Versioned deterministic grading rules
+assessments
+Persist model output + rule evaluation
+reports
+Generate PDF and report metadata
+sync
+Idempotent synchronization and retry handling
+audit
+Immutable-style audit event records
+health
+Service/model/database health endpoints
+5. CV Pipeline
+  Image Quality  
+→
+  Preprocess  
+→
+  Onion Detection  
+→
+  Size Estimation  
+→
+  Defect Detection  
+→
+  Normalize  
+The CV service should return structured measurements rather than a final grade.
+Output
+Example schema concept
+Onion object
+id, bbox/mask, confidence
+Diameter
+value, unit, confidence, reference source
+Defect
+type, confidence, image region, onion_id
+Image quality
+lighting_score/flag, blur_flag, occlusion_flag
+Model metadata
+model_name, model_version, inference_time
+6. Rule Engine
+This is the critical separation between AI detection and procurement grading. The model detects/measures; deterministic code applies the approved quality specification.
+  CV JSON  
+→
+  Validated Schema  
+→
+  Rule Set Version  
+→
+  Criterion Evaluation  
+→
+  Lot Aggregation  
+→
+  Final Result  
+Never let an LLM directly assign Grade A/URS.
+Store rule-set version with every assessment.
+Expose each triggered rule to the UI.
+Keep thresholds/configuration outside hardcoded UI components.
+Add unit tests for every grading rule and boundary condition.
+7. Data Model
+Entity
+Important fields
+User
+id, role, name, centre_id, created_at
+ProcurementCentre
+id, name, location, configuration
+Lot
+id, local_id, centre_id, farmer_ref, quantity, created_at, operator_id, status
+CaptureSession
+id, lot_id, views, quality_status, created_at
+Image
+id, lot_id, local_path/object_key, hash, view, metadata
+Detection
+id, image_id, onion_id, bbox/mask, confidence
+Defect
+id, detection_id, type, confidence, region
+Measurement
+id, onion_id, diameter, unit, confidence
+RuleSet
+id, version, effective_from, specification_ref
+RuleEvaluation
+id, assessment_id, rule_id, input, outcome, explanation
+Assessment
+id, lot_id, grade_a_pct, urs_pct, other_pct, confidence, model_version, rule_version
+Report
+id, assessment_id, report_id, pdf_key, generated_at
+SyncJob
+id, local_id, state, retry_count, last_error
+AuditEvent
+id, actor_id, event_type, entity_id, timestamp, metadata
+8. Offline-First Architecture
+Mobile creates a stable local UUID for each lot and capture session.
+Images are stored locally until successfully uploaded.
+Assessment metadata is stored in SQLite.
+Sync worker uploads metadata/images in dependency order.
+Server endpoints are idempotent on local UUID.
+Use exponential backoff for transient failures.
+Never delete local evidence until the server confirms successful synchronization.
+UI shows Offline, Pending Sync, Syncing, Synced and Sync Failed.
+9. API Surface
+Method
+Endpoint
+Purpose
+POST
+/auth/login
+Operator login
+POST
+/lots
+Create lot
+GET
+/lots
+List/search lots
+GET
+/lots/{id}
+Lot detail
+POST
+/lots/{id}/captures
+Create capture session
+POST
+/lots/{id}/images
+Upload image
+POST
+/lots/{id}/analyze
+Run CV analysis
+GET
+/lots/{id}/assessment
+Get assessment
+POST
+/lots/{id}/review
+Submit manual review decision
+POST
+/lots/{id}/report
+Generate report
+POST
+/sync/batch
+Idempotent offline sync
+GET
+/health
+Health check
+10. Security
+Keep secrets in environment variables; never commit keys.
+Use backend-only model/API credentials.
+Validate image MIME type, size and decoded content.
+Generate safe server-side object names.
+Use RBAC and object-level authorization by centre/role.
+Use secure JWT/session handling and password hashing.
+Rate-limit authentication and expensive analysis endpoints.
+Log audit events without storing unnecessary sensitive information.
+Treat uploaded text/images as untrusted data.
+11. Testing Strategy
+Level
+Tools
+Minimum coverage
+Rules unit tests
+pytest
+All rule branches + boundary values
+CV adapter tests
+pytest
+Schema validation + deterministic fixtures
+API tests
+FastAPI TestClient/httpx
+Auth, lots, analysis, reports, sync
+Mobile tests
+Jest / React Native Testing Library
+Critical capture/result states
+E2E
+Playwright
+Web dashboard if built; API smoke tests otherwise
+Offline tests
+Device/local integration
+Network loss during capture and sync
+Security
+Bandit, pip-audit, npm audit, ESLint
+CI checks on every major phase
+12. Demo Mode / Reliability
+DEMO_MODE is mandatory
+Seed a small set of realistic onion lots, annotated detection results, rule evaluations and reports. The UI must look identical in live and demo mode. If the CV model or hosted services fail, the hackathon demo can still complete end-to-end using clearly internal seeded/demo data.
+13. Deployment
+Development: Expo Go + local FastAPI + SQLite.
+Online demo: React Native client + hosted FastAPI + Supabase PostgreSQL/Storage.
+Optional web analytics dashboard: Next.js + Tailwind + Recharts.
+Use free deployment URLs; no paid domain required.
+Keep the database schema portable so local SQLite remains a valid fallback.
+14. Suggested Repository Structure
+oniongrade/
+├── apps/
+│   └── inspector-mobile/
+├── services/
+│   └── api/
+│       ├── app/
+│       │   ├── auth/
+│       │   ├── lots/
+│       │   ├── cv/
+│       │   ├── rules/
+│       │   ├── assessments/
+│       │   ├── reports/
+│       │   ├── sync/
+│       │   └── audit/
+│       └── tests/
+├── packages/
+│   └── shared-types/
+├── ml/
+│   ├── preprocessing/
+│   ├── inference/
+│   └── fixtures/
+├── rules/
+│   └── procurement/
+├── docs/
+├── tests/
+├── .env.example
+└── README.md
+15. Antigravity Master Build Instruction
+Implementation instruction
+Build OnionGrade AI in small runnable phases. First create the shared design system and mobile app shell. Then implement Create Lot and Guided Capture. Add the CV service behind a stable typed interface. Add the deterministic rules engine and evidence/result screens. Add report generation and offline sync. Keep DEMO_MODE available throughout. Run tests after every major phase. Do not replace the stack with paid services, do not expose secrets in clients, and do not allow the AI model or LLM to directly determine the final grade.
+16. Technology Decisions That Should Not Be Silently Changed
+React Native + Expo + TypeScript for the inspector mobile app.
+Python + FastAPI for the backend.
+PostgreSQL/Supabase for hosted relational data; SQLite for local fallback.
+OpenCV/Pillow + a suitable YOLO-family CV model for the prototype CV layer.
+Deterministic Python rules engine for grading.
+ReportLab for PDF reports.
+Free/open-source tooling and free tiers only for the hackathon prototype.
+DEMO_MODE + seeded fixtures for reliability.
+17. Important Feasibility Boundary
+The supplied research explicitly warns that a normal smartphone camera cannot reliably determine internal rot, internal density, internal fungal infection or some moisture-related properties. The MVP therefore targets visible external quality characteristics and should present advanced controlled/multispectral/X-ray sensing as future scope, not as an implemented smartphone capability.
+
+========== OnionGrade_AI_UI_UX_Design (1).docx ==========
+UI/UX DESIGN SYSTEM
+OnionGrade AI — UI/UX Design Specification
+A premium, field-ready mobile experience for AI-assisted onion quality assessment
+SIH 2026 • Problem Statement SIH26031 • Medium
+Design North Star
+“A procurement inspector should be able to create a lot, capture a standardized sample, understand the AI evidence, review the rule-based grade, and generate an auditable report without feeling like they are using a generic government ERP.”
+1. Product Context
+OnionGrade AI addresses SIH26031: quality and grading of onions can vary across procurement centres because assessment is visual, multi-parameter and time-sensitive. The research supplied for this project frames the product as an AI-assisted digital assaying workflow rather than a simple “photo → Grade A” classifier.
+Primary user: procurement inspector/operator.
+Core outcome: consistent, transparent and auditable lot-level assessment.
+MVP scope: visible external quality characteristics only; internal rot/density/moisture are explicitly outside normal smartphone-camera capability.
+Human-in-the-loop: low-confidence or ambiguous cases move to manual review.
+Offline-first: capture and assessment should continue when connectivity is unavailable, then sync later.
+2. Reference Direction
+The two uploaded reference images are treated as visual inspiration only. The first reference demonstrates a structured analytics dashboard; the second demonstrates premium dark AI/SaaS presentation. OnionGrade should borrow the hierarchy, cards, analytics, spacing and polish—not copy their layouts, branding or content.
+Reference image A supplied by the user — structured dashboard/card language.
+Reference image B supplied by the user — premium dark AI/SaaS language.
+3. Visual Identity
+Token
+Specification
+Use
+Background
+Deep navy/charcoal (#0B1020–#111827)
+App shell and main surfaces
+Primary
+Violet/purple (#7C3AED family)
+Primary CTA, active navigation, AI analysis
+Secondary
+Cyan/blue
+Measurements, analytics, informational states
+Success
+Green
+Accepted/Grade A / completed verification
+Warning
+Amber/yellow
+Review, borderline, evidence needing attention
+Danger
+Red/coral
+Rejected/defect/high-risk state
+Surface
+Raised dark cards + thin borders
+Lot cards, defect cards, reports
+Typography
+Modern sans-serif; bold display + compact data labels
+Strong hierarchy and scanability
+4. UX Principles
+Capture first, analyze second: the UI should make standardized sampling impossible to miss.
+Evidence before verdict: every grade must expose the detected defects, measurements, rules and confidence.
+One primary action per screen: avoid clutter and reduce operator mistakes.
+Field-ready interaction: large touch targets, high contrast, readable numbers and short labels.
+Never imply certainty beyond the camera: visibly label the MVP as external-quality assessment.
+Offline continuity: show Sync Pending / Synced states without blocking the core workflow.
+Progressive disclosure: keep the default screen concise; allow inspectors to drill into individual onion/defect evidence.
+5. Information Architecture
+  Login  
+→
+  Home  
+→
+  Create Lot  
+→
+  Guided Capture  
+→
+  AI Analysis  
+→
+  Review Result  
+→
+  Digital Report  
+Home: Today’s lots, pending sync, quick Create Lot, recent assessments.
+Lots: searchable history with status, farmer, centre, quantity, grade and timestamp.
+Create Lot: procurement centre, farmer, lot ID, quantity and sample metadata.
+Capture: guided camera flow with distance/lighting/sample instructions and image-quality feedback.
+Analysis: processing state followed by onion detection, defect detection and measurements.
+Result: Grade A %, URS %, Other/Rejected %, average diameter, defect distribution, confidence and rule explanations.
+Evidence: original images, annotated defects, measurements, triggered rules and operator information.
+Report: digital report preview, report ID, export/share and sync status.
+Settings: operator profile, centre information, model/rules version, offline storage and sync.
+6. Key Screen Specifications
+Screen
+UI/UX specification
+Dashboard / Home
+Hero card: Today’s inspected lots. KPI cards: lots assessed, Grade A average, pending sync, manual reviews. Primary CTA: Create New Lot. Recent lots list with status chips.
+Create Lot
+Minimal form. Required: centre, farmer, lot ID, quantity. Auto timestamp/operator ID. Optional notes. Validate before continuing.
+Guided Capture
+Full-screen camera. Overlay sample boundary/reference surface. Step indicator: Surface → Lighting → Distance → Multiple Views → Capture. Show image-quality warnings before AI analysis.
+AI Analysis
+Animated but restrained processing state. Show stages: image quality → onion detection → defect detection → size estimation → rules engine. Never show a fake confidence value while processing.
+Lot Result
+Large grade summary with Grade A / URS / Other. Below: defect distribution, average diameter, undersized %, sprouted %, rot/damage %. Primary action: View Evidence. Secondary: Generate Report.
+Evidence Detail
+Image with annotated onion/defect markers, measured diameter and defect label. Side/bottom panel shows applicable rule and AI confidence. Include Manual Review action.
+Digital Report
+Report ID, lot/farmer/centre, date/time, sample size, Grade A %, URS %, defect distribution, images, confidence, operator ID, final decision. Actions: Save PDF, Share, Sync.
+Dispute / Review Mode
+Timeline of original sample, detected defect, measurement, lot statistics, applicable rule, timestamp, assessor ID and AI confidence. Designed to answer “Why was this lot rejected?”
+7. Result-State Visual Language
+State
+Color
+Meaning
+Required interaction
+Grade A / Accepted
+Green
+Lot satisfies applicable Grade A criteria
+View evidence / report
+URS
+Amber
+Lot maps to URS under applicable rules
+View rule explanation
+Other / Rejected
+Red
+Criteria not satisfied
+View evidence / manual review
+Manual Review
+Amber
+AI confidence below threshold or ambiguity detected
+Inspector reviews evidence
+Sync Pending
+Blue/Cyan
+Saved locally, waiting for connectivity
+Retry sync
+Synced
+Green/Cyan
+Server copy confirmed
+Open report
+8. Dashboard / Analytics Direction
+If the team adds the supporting procurement dashboard for the hackathon demo, it should reuse the same design tokens and show centre-level operational intelligence—not a generic admin panel.
+KPI cards: total lots, lots assessed, manual reviews, Grade A %, URS %, rejected %.
+Charts: grade distribution, defect distribution, centre-wise assessment volume, rejection patterns over time.
+Lot table: Lot ID, centre, farmer, quantity, result, confidence, assessor, timestamp, sync state.
+Filters: centre, date, grade, defect type, manual review and sync state.
+Do not add opaque “AI score” or candidate-style ranking.
+9. Components
+Component
+Variants / behavior
+Status Chip
+Grade A, URS, Rejected, Manual Review, Sync Pending, Synced
+KPI Card
+Value + label + small trend/context
+Lot Card
+Lot ID + farmer + quantity + result + timestamp
+Defect Card
+Defect name + percentage/count + severity + evidence link
+Evidence Viewer
+Original image + annotations + measurement + rule
+Progress Stepper
+Create → Capture → Analyze → Review → Report
+Primary Button
+High-contrast violet; one per screen
+Secondary Button
+Ghost/outline; safe secondary actions
+Chart Card
+Minimal gridlines, clear legends and readable labels
+Sync Indicator
+Offline / Syncing / Synced / Failed
+Bottom Sheet
+Rule explanation, filters and detailed evidence
+10. Responsive & Accessibility Rules
+Mobile-first; optimize for common Android phone widths.
+Touch targets at least ~44 px where practical.
+Do not rely on color alone; pair colors with labels/icons.
+Use large numerals for measurements and grade percentages.
+Support dark-first UI with sufficient text contrast.
+Use skeleton/loading states for network/model calls and explicit empty/error states.
+For slow devices or weak networks, avoid heavy animation and large image payloads.
+11. Critical UX States
+State
+Expected UI
+No lots yet
+Friendly empty state + Create New Lot CTA
+Camera permission denied
+Explain why camera is required + retry/settings path
+Poor lighting
+Capture blocked with actionable lighting guidance
+Occluded sample
+Ask for rearrangement / another view
+AI unavailable
+Keep captured evidence, mark Pending Analysis, allow retry
+Low confidence
+Manual Review state; do not silently assign a definitive grade
+Offline
+Continue locally; show Offline banner and Pending Sync
+Sync conflict/failure
+Keep local record intact; show retry and last attempt
+No report generated
+Preserve assessment; retry report generation
+12. Antigravity Build Brief
+Use this as the UI/UX source of truth when generating the application. Build the visual system before individual screens, then reuse the same components across every flow.
+Antigravity visual instruction
+Create a premium dark, AI-native procurement inspection app. Use deep navy surfaces, restrained violet gradients, cyan analytics accents and semantic green/amber/red states. Use rounded cards, thin borders, clean Lucide-style icons, strong numerals and generous spacing. Do not generate a generic Bootstrap/ERP interface. Make the capture and result screens the visual centre of the product. Every AI result must be explainable through evidence and rules.
+
