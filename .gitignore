@@ -1,0 +1,17 @@
+.venv/
+**/.venv/
+node_modules/
+**/node_modules/
+__pycache__/
+**/__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+.expo/
+runs/
+
+runs/
+.gsd/
+
+backend/main_backup.py
