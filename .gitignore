@@ -1,17 +1,38 @@
+﻿# Python environments and cache
 .venv/
 **/.venv/
-node_modules/
-**/node_modules/
 __pycache__/
 **/__pycache__/
-*.pyc
+*.py[cod]
+
+# Environment variables and secrets
 .env
 .env.*
 !.env.example
-.expo/
-runs/
 
+# Node.js and Expo
+node_modules/
+**/node_modules/
+.expo/
+dist/
+web-build/
+
+# Training outputs
 runs/
+**/runs/
 .gsd/
 
+# Model weights
+*.pt
+*.pth
+*.onnx
+
+# Generated evaluation images and reports
+annotation_check.jpg
+comparison_rotten.jpg
+comparison_rotten_groundtruth.jpg
+rotten_box_audit.csv
+threshold_sweep_results.csv
+
+# Backup files
 backend/main_backup.py
